@@ -1,0 +1,152 @@
+import java.util.*;
+
+/**
+ * UseCase4HotelBookingApp
+ * 
+ * Demonstrates read-only room search functionality.
+ * Guests can view available rooms without modifying system state.
+ * 
+ * @author Shre
+ * @version 4.0
+ */
+public class UseCase4HotelBookingApp {
+
+    // ------------------ ABSTRACT ROOM ------------------
+    abstract static class Room {
+        protected String type;
+        protected int beds;
+        protected double price;
+
+        public Room(String type, int beds, double price) {
+            this.type = type;
+            this.beds = beds;
+            this.price = price;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public abstract void displayDetails();
+    }
+
+    // ------------------ ROOM TYPES ------------------
+    static class SingleRoom extends Room {
+        public SingleRoom() {
+            super("Single", 1, 2000);
+        }
+
+        public void displayDetails() {
+            System.out.println("Type: Single | Beds: 1 | Price: ₹2000");
+        }
+    }
+
+    static class DoubleRoom extends Room {
+        public DoubleRoom() {
+            super("Double", 2, 3500);
+        }
+
+        public void displayDetails() {
+            System.out.println("Type: Double | Beds: 2 | Price: ₹3500");
+        }
+    }
+
+    static class SuiteRoom extends Room {
+        public SuiteRoom() {
+            super("Suite", 3, 6000);
+        }
+
+        public void displayDetails() {
+            System.out.println("Type: Suite | Beds: 3 | Price: ₹6000");
+        }
+    }
+
+    // ------------------ INVENTORY (STATE HOLDER) ------------------
+    static class RoomInventory {
+        private HashMap<String, Integer> availabilityMap;
+
+        public RoomInventory() {
+            availabilityMap = new HashMap<>();
+            availabilityMap.put("Single", 5);
+            availabilityMap.put("Double", 0); // intentionally unavailable
+            availabilityMap.put("Suite", 2);
+        }
+
+        // READ-ONLY ACCESS
+        public int getAvailability(String type) {
+            return availabilityMap.getOrDefault(type, 0);
+        }
+
+        public Set<String> getRoomTypes() {
+            return availabilityMap.keySet();
+        }
+    }
+
+    // ------------------ SEARCH SERVICE ------------------
+    static class SearchService {
+
+        private RoomInventory inventory;
+        private Map<String, Room> roomCatalog;
+
+        public SearchService(RoomInventory inventory) {
+            this.inventory = inventory;
+
+            // Domain objects (Room details)
+            roomCatalog = new HashMap<>();
+            roomCatalog.put("Single", new SingleRoom());
+            roomCatalog.put("Double", new DoubleRoom());
+            roomCatalog.put("Suite", new SuiteRoom());
+        }
+
+        // READ-ONLY SEARCH METHOD
+        public void searchAvailableRooms() {
+
+            System.out.println("\n--- Available Rooms ---");
+
+            boolean found = false;
+
+            for (String type : inventory.getRoomTypes()) {
+
+                int available = inventory.getAvailability(type);
+
+                // Validation: Only show available rooms
+                if (available > 0) {
+                    Room room = roomCatalog.get(type);
+
+                    room.displayDetails();
+                    System.out.println("Available: " + available);
+                    System.out.println("----------------------");
+
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                System.out.println("No rooms available.");
+            }
+        }
+    }
+
+    // ------------------ MAIN METHOD ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v4.0 =====");
+
+        // Initialize Inventory
+        RoomInventory inventory = new RoomInventory();
+
+        // Initialize Search Service
+        SearchService searchService = new SearchService(inventory);
+
+        // ------------------ TEST CASES ------------------
+
+        // Test Case 1: Normal Search
+        searchService.searchAvailableRooms();
+
+        // Test Case 2: Ensure No State Change
+        System.out.println("\nRe-checking inventory (should be unchanged):");
+        searchService.searchAvailableRooms();
+
+        System.out.println("\n===== Application Finished =====");
+    }
+}
