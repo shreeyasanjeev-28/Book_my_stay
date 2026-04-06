@@ -1,0 +1,182 @@
+import java.util.*;
+
+/**
+ * UseCase10HotelBookingApp
+ * 
+ * Demonstrates safe cancellation using:
+ * - Stack (LIFO rollback)
+ * - Inventory restoration
+ * - Validation of existing bookings
+ * 
+ * @author Shre
+ * @version 10.0
+ */
+public class UseCase10HotelBookingApp {
+
+    // ------------------ RESERVATION ------------------
+    static class Reservation {
+        private String reservationId;
+        private String roomType;
+
+        public Reservation(String reservationId, String roomType) {
+            this.reservationId = reservationId;
+            this.roomType = roomType;
+        }
+
+        public String getReservationId() {
+            return reservationId;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+    }
+
+    // ------------------ INVENTORY ------------------
+    static class InventoryService {
+        private Map<String, Integer> availability;
+
+        public InventoryService() {
+            availability = new HashMap<>();
+            availability.put("Single", 1);
+            availability.put("Double", 1);
+        }
+
+        public void increment(String type) {
+            availability.put(type, availability.get(type) + 1);
+        }
+
+        public void decrement(String type) {
+            availability.put(type, availability.get(type) - 1);
+        }
+
+        public void displayInventory() {
+            System.out.println("\n--- Inventory ---");
+            for (Map.Entry<String, Integer> e : availability.entrySet()) {
+                System.out.println(e.getKey() + ": " + e.getValue());
+            }
+        }
+    }
+
+    // ------------------ BOOKING HISTORY ------------------
+    static class BookingHistory {
+        private Map<String, Reservation> confirmedBookings;
+
+        public BookingHistory() {
+            confirmedBookings = new HashMap<>();
+        }
+
+        public void add(Reservation r) {
+            confirmedBookings.put(r.getReservationId(), r);
+        }
+
+        public Reservation get(String id) {
+            return confirmedBookings.get(id);
+        }
+
+        public void remove(String id) {
+            confirmedBookings.remove(id);
+        }
+
+        public boolean exists(String id) {
+            return confirmedBookings.containsKey(id);
+        }
+
+        public void display() {
+            System.out.println("\n--- Active Bookings ---");
+            if (confirmedBookings.isEmpty()) {
+                System.out.println("No active bookings.");
+                return;
+            }
+            for (Reservation r : confirmedBookings.values()) {
+                System.out.println(r.getReservationId() + " -> " + r.getRoomType());
+            }
+        }
+    }
+
+    // ------------------ CANCELLATION SERVICE ------------------
+    static class CancellationService {
+
+        private InventoryService inventory;
+        private BookingHistory history;
+
+        // Stack for rollback (LIFO)
+        private Stack<String> rollbackStack;
+
+        public CancellationService(InventoryService inventory, BookingHistory history) {
+            this.inventory = inventory;
+            this.history = history;
+            this.rollbackStack = new Stack<>();
+        }
+
+        public void cancelBooking(String reservationId) {
+
+            System.out.println("\nProcessing cancellation for: " + reservationId);
+
+            // Validation
+            if (!history.exists(reservationId)) {
+                System.out.println("Cancellation FAILED -> Reservation does not exist");
+                return;
+            }
+
+            // Retrieve booking
+            Reservation r = history.get(reservationId);
+
+            // Push to rollback stack
+            rollbackStack.push(reservationId);
+
+            // Restore inventory
+            inventory.increment(r.getRoomType());
+
+            // Remove from active bookings
+            history.remove(reservationId);
+
+            System.out.println("Cancellation SUCCESS for " + reservationId);
+        }
+
+        // Display rollback history
+        public void displayRollbackStack() {
+            System.out.println("\n--- Rollback Stack (Recent First) ---");
+            System.out.println(rollbackStack);
+        }
+    }
+
+    // ------------------ MAIN ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v10.0 =====");
+
+        // Initialize services
+        InventoryService inventory = new InventoryService();
+        BookingHistory history = new BookingHistory();
+        CancellationService cancelService = new CancellationService(inventory, history);
+
+        // ------------------ SETUP (Simulate bookings) ------------------
+        history.add(new Reservation("S1", "Single"));
+        history.add(new Reservation("D1", "Double"));
+
+        inventory.decrement("Single");
+        inventory.decrement("Double");
+
+        // ------------------ TEST CASES ------------------
+
+        // Test Case 1: Valid Cancellation
+        cancelService.cancelBooking("S1");
+
+        // Test Case 2: Duplicate Cancellation
+        cancelService.cancelBooking("S1");
+
+        // Test Case 3: Invalid Reservation
+        cancelService.cancelBooking("X99");
+
+        // Test Case 4: Another Valid Cancellation
+        cancelService.cancelBooking("D1");
+
+        // Display results
+        history.display();
+        inventory.displayInventory();
+        cancelService.displayRollbackStack();
+
+        System.out.println("\n===== Application Finished =====");
+    }
+}
