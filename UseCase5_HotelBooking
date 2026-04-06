@@ -1,0 +1,113 @@
+import java.util.LinkedList;
+import java.util.Queue;
+
+/**
+ * UseCase5HotelBookingApp
+ * 
+ * Demonstrates handling of booking requests using FIFO Queue.
+ * Requests are stored and processed later (no allocation here).
+ * 
+ * @author Shre
+ * @version 5.0
+ */
+public class UseCase5HotelBookingApp {
+
+    // ------------------ RESERVATION (Actor) ------------------
+    /**
+     * Represents a booking request from a guest
+     */
+    static class Reservation {
+        private String guestName;
+        private String roomType;
+
+        public Reservation(String guestName, String roomType) {
+            this.guestName = guestName;
+            this.roomType = roomType;
+        }
+
+        public String getGuestName() {
+            return guestName;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public void display() {
+            System.out.println("Guest: " + guestName + " | Requested: " + roomType);
+        }
+    }
+
+    // ------------------ BOOKING REQUEST QUEUE ------------------
+    /**
+     * Handles incoming booking requests using FIFO principle
+     */
+    static class BookingQueue {
+        private Queue<Reservation> queue;
+
+        public BookingQueue() {
+            queue = new LinkedList<>();
+        }
+
+        // Add request to queue
+        public void addRequest(Reservation reservation) {
+            queue.offer(reservation); // FIFO insertion
+            System.out.println("Request added: " + reservation.getGuestName());
+        }
+
+        // View all queued requests (without removing)
+        public void displayQueue() {
+            System.out.println("\n--- Booking Request Queue ---");
+
+            if (queue.isEmpty()) {
+                System.out.println("No pending requests.");
+                return;
+            }
+
+            for (Reservation r : queue) {
+                r.display();
+            }
+        }
+
+        // Peek next request (without removal)
+        public Reservation peekNext() {
+            return queue.peek();
+        }
+
+        // Get queue size
+        public int getQueueSize() {
+            return queue.size();
+        }
+    }
+
+    // ------------------ MAIN METHOD ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v5.0 =====");
+
+        // Initialize Booking Queue
+        BookingQueue bookingQueue = new BookingQueue();
+
+        // ------------------ TEST CASES ------------------
+
+        // Test Case 1: Add Requests (FIFO Order)
+        bookingQueue.addRequest(new Reservation("Alice", "Single"));
+        bookingQueue.addRequest(new Reservation("Bob", "Double"));
+        bookingQueue.addRequest(new Reservation("Charlie", "Suite"));
+
+        // Test Case 2: Display Queue
+        bookingQueue.displayQueue();
+
+        // Test Case 3: Peek Next Request
+        System.out.println("\nNext Request to Process:");
+        Reservation next = bookingQueue.peekNext();
+        if (next != null) {
+            next.display();
+        }
+
+        // Test Case 4: Queue Size
+        System.out.println("\nTotal Requests in Queue: " + bookingQueue.getQueueSize());
+
+        System.out.println("\n===== Application Finished =====");
+    }
+}
