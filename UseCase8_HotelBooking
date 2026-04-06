@@ -1,0 +1,147 @@
+import java.util.*;
+
+/**
+ * UseCase8HotelBookingApp
+ * 
+ * Demonstrates booking history tracking and reporting using List.
+ * Maintains confirmed bookings in order and supports reporting.
+ * 
+ * @author Shre
+ * @version 8.0
+ */
+public class UseCase8HotelBookingApp {
+
+    // ------------------ RESERVATION ------------------
+    static class Reservation {
+        private String reservationId;
+        private String guestName;
+        private String roomType;
+
+        public Reservation(String reservationId, String guestName, String roomType) {
+            this.reservationId = reservationId;
+            this.guestName = guestName;
+            this.roomType = roomType;
+        }
+
+        public String getReservationId() {
+            return reservationId;
+        }
+
+        public String getGuestName() {
+            return guestName;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public void display() {
+            System.out.println("ID: " + reservationId +
+                    " | Guest: " + guestName +
+                    " | Room: " + roomType);
+        }
+    }
+
+    // ------------------ BOOKING HISTORY ------------------
+    /**
+     * Stores confirmed bookings in insertion order
+     */
+    static class BookingHistory {
+        private List<Reservation> historyList;
+
+        public BookingHistory() {
+            historyList = new ArrayList<>();
+        }
+
+        // Add confirmed booking
+        public void addReservation(Reservation r) {
+            historyList.add(r);
+            System.out.println("Added to history: " + r.getReservationId());
+        }
+
+        // Get all bookings (read-only access)
+        public List<Reservation> getAllReservations() {
+            return historyList;
+        }
+
+        // Display all bookings
+        public void displayHistory() {
+            System.out.println("\n--- Booking History ---");
+
+            if (historyList.isEmpty()) {
+                System.out.println("No bookings found.");
+                return;
+            }
+
+            for (Reservation r : historyList) {
+                r.display();
+            }
+        }
+    }
+
+    // ------------------ REPORT SERVICE ------------------
+    /**
+     * Generates reports from booking history
+     */
+    static class BookingReportService {
+
+        // Generate summary report
+        public void generateSummary(List<Reservation> reservations) {
+
+            System.out.println("\n--- Booking Summary Report ---");
+
+            if (reservations.isEmpty()) {
+                System.out.println("No data available.");
+                return;
+            }
+
+            // Count bookings per room type
+            Map<String, Integer> countMap = new HashMap<>();
+
+            for (Reservation r : reservations) {
+                countMap.put(
+                        r.getRoomType(),
+                        countMap.getOrDefault(r.getRoomType(), 0) + 1
+                );
+            }
+
+            // Display summary
+            for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
+                System.out.println(entry.getKey() + " Bookings: " + entry.getValue());
+            }
+
+            System.out.println("Total Bookings: " + reservations.size());
+        }
+    }
+
+    // ------------------ MAIN METHOD ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v8.0 =====");
+
+        // Initialize Booking History
+        BookingHistory history = new BookingHistory();
+
+        // Initialize Report Service
+        BookingReportService reportService = new BookingReportService();
+
+        // ------------------ TEST CASES ------------------
+
+        // Test Case 1: Add Confirmed Bookings
+        history.addReservation(new Reservation("S1", "Alice", "Single"));
+        history.addReservation(new Reservation("S2", "Bob", "Single"));
+        history.addReservation(new Reservation("D1", "Charlie", "Double"));
+        history.addReservation(new Reservation("SU1", "David", "Suite"));
+
+        // Test Case 2: Display History (Order Check)
+        history.displayHistory();
+
+        // Test Case 3: Generate Report
+        reportService.generateSummary(history.getAllReservations());
+
+        // Test Case 4: Ensure Read-Only Reporting
+        reportService.generateSummary(history.getAllReservations());
+
+        System.out.println("\n===== Application Finished =====");
+    }
+}
