@@ -1,0 +1,151 @@
+import java.io.*;
+import java.util.*;
+
+/**
+ * UseCase12HotelBookingApp
+ * 
+ * Demonstrates persistence and recovery using:
+ * - Serialization / Deserialization
+ * - File storage
+ * - Safe recovery handling
+ * 
+ * @author Shre
+ * @version 12.0
+ */
+public class UseCase12HotelBookingApp {
+
+    // ------------------ RESERVATION ------------------
+    static class Reservation implements Serializable {
+        private String reservationId;
+        private String roomType;
+
+        public Reservation(String reservationId, String roomType) {
+            this.reservationId = reservationId;
+            this.roomType = roomType;
+        }
+
+        public String toString() {
+            return reservationId + " -> " + roomType;
+        }
+    }
+
+    // ------------------ INVENTORY ------------------
+    static class InventoryService implements Serializable {
+        private Map<String, Integer> availability;
+
+        public InventoryService() {
+            availability = new HashMap<>();
+            availability.put("Single", 2);
+            availability.put("Double", 1);
+        }
+
+        public void decrement(String type) {
+            availability.put(type, availability.get(type) - 1);
+        }
+
+        public void display() {
+            System.out.println("\nInventory: " + availability);
+        }
+    }
+
+    // ------------------ BOOKING HISTORY ------------------
+    static class BookingHistory implements Serializable {
+        private List<Reservation> history;
+
+        public BookingHistory() {
+            history = new ArrayList<>();
+        }
+
+        public void add(Reservation r) {
+            history.add(r);
+        }
+
+        public void display() {
+            System.out.println("\nBooking History:");
+            if (history.isEmpty()) {
+                System.out.println("No bookings.");
+                return;
+            }
+            for (Reservation r : history) {
+                System.out.println(r);
+            }
+        }
+    }
+
+    // ------------------ SYSTEM STATE (SNAPSHOT) ------------------
+    static class SystemState implements Serializable {
+        InventoryService inventory;
+        BookingHistory history;
+
+        public SystemState(InventoryService inventory, BookingHistory history) {
+            this.inventory = inventory;
+            this.history = history;
+        }
+    }
+
+    // ------------------ PERSISTENCE SERVICE ------------------
+    static class PersistenceService {
+
+        private static final String FILE_NAME = "system_state.ser";
+
+        // SAVE STATE
+        public static void save(SystemState state) {
+            try (ObjectOutputStream out =
+                         new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+
+                out.writeObject(state);
+                System.out.println("\nState saved successfully.");
+
+            } catch (IOException e) {
+                System.out.println("Error saving state: " + e.getMessage());
+            }
+        }
+
+        // LOAD STATE
+        public static SystemState load() {
+            try (ObjectInputStream in =
+                         new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+
+                System.out.println("State loaded successfully.");
+                return (SystemState) in.readObject();
+
+            } catch (FileNotFoundException e) {
+                System.out.println("No saved state found. Starting fresh.");
+            } catch (Exception e) {
+                System.out.println("Error loading state. Starting safe state.");
+            }
+
+            // Return safe default state
+            return new SystemState(new InventoryService(), new BookingHistory());
+        }
+    }
+
+    // ------------------ MAIN ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v12.0 =====");
+
+        // Load previous state
+        SystemState state = PersistenceService.load();
+
+        InventoryService inventory = state.inventory;
+        BookingHistory history = state.history;
+
+        // ------------------ TEST CASES ------------------
+
+        // Simulate booking
+        System.out.println("\nSimulating new booking...");
+        Reservation r1 = new Reservation("S1", "Single");
+        history.add(r1);
+        inventory.decrement("Single");
+
+        // Display current state
+        history.display();
+        inventory.display();
+
+        // Save state before shutdown
+        PersistenceService.save(new SystemState(inventory, history));
+
+        System.out.println("\n===== Restart Application to See Recovery =====");
+    }
+}
