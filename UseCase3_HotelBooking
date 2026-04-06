@@ -1,0 +1,84 @@
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * UseCase3HotelBookingApp
+ * 
+ * Demonstrates centralized inventory management using HashMap.
+ * Replaces scattered variables with a single source of truth.
+ * 
+ * @author Shre
+ * @version 3.0
+ */
+public class UseCase3HotelBookingApp {
+
+    // ------------------ RoomInventory Class ------------------
+    /**
+     * Handles all room availability logic using HashMap
+     */
+    static class RoomInventory {
+
+        private HashMap<String, Integer> availabilityMap;
+
+        // Constructor: Initialize inventory
+        public RoomInventory() {
+            availabilityMap = new HashMap<>();
+
+            // Initial room availability
+            availabilityMap.put("Single", 5);
+            availabilityMap.put("Double", 3);
+            availabilityMap.put("Suite", 2);
+        }
+
+        // Get availability of a specific room type
+        public int getAvailability(String roomType) {
+            return availabilityMap.getOrDefault(roomType, 0);
+        }
+
+        // Update availability (controlled modification)
+        public void updateAvailability(String roomType, int newCount) {
+            if (availabilityMap.containsKey(roomType)) {
+                availabilityMap.put(roomType, newCount);
+                System.out.println("Updated " + roomType + " rooms to " + newCount);
+            } else {
+                System.out.println("Room type not found!");
+            }
+        }
+
+        // Display full inventory
+        public void displayInventory() {
+            System.out.println("\n--- Current Room Inventory ---");
+            for (Map.Entry<String, Integer> entry : availabilityMap.entrySet()) {
+                System.out.println(entry.getKey() + " Rooms Available: " + entry.getValue());
+            }
+        }
+    }
+
+    // ------------------ MAIN METHOD ------------------
+    public static void main(String[] args) {
+
+        System.out.println("===== Book My Stay App v3.0 =====");
+
+        // Initialize Inventory (Actor)
+        RoomInventory inventory = new RoomInventory();
+
+        // Display initial inventory
+        inventory.displayInventory();
+
+        // ------------------ TEST CASES ------------------
+
+        // Test Case 1: Get Availability
+        System.out.println("\nAvailable Single Rooms: " + inventory.getAvailability("Single"));
+
+        // Test Case 2: Update Availability
+        inventory.updateAvailability("Single", 4);
+
+        // Test Case 3: Invalid Room Type
+        inventory.updateAvailability("Deluxe", 2);
+
+        // Test Case 4: Display Updated Inventory
+        inventory.displayInventory();
+
+        System.out.println("\n===== Application Finished =====");
+    }
+}
